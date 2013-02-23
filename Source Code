@@ -1,0 +1,221 @@
+package
+{
+  import flash.debugger.enterDebugger;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.ui.Mouse;
+	
+	import Box2D.Collision.Shapes.b2CircleShape;
+	import Box2D.Collision.Shapes.b2PolygonShape;
+	import Box2D.Common.Math.b2Vec2;
+	import Box2D.Dynamics.b2Body;
+	import Box2D.Dynamics.b2BodyDef;
+	import Box2D.Dynamics.b2DebugDraw;
+	import Box2D.Dynamics.b2FixtureDef;
+	import Box2D.Dynamics.b2World;
+	import Box2D.Dynamics.Joints.b2DistanceJoint;
+	import Box2D.Dynamics.Joints.b2DistanceJointDef;
+	import Box2D.Dynamics.Joints.b2FrictionJoint;
+	import Box2D.Dynamics.Joints.b2MouseJoint;
+	import Box2D.Dynamics.Joints.b2MouseJointDef;
+	import Box2D.Dynamics.Joints.b2RevoluteJoint;
+	import Box2D.Dynamics.Joints.b2RevoluteJointDef;
+	
+	[SWF(width="465",height="465",backgroundColor="0")]
+	public class Ragdoll extends Sprite
+	{
+		private var world:b2World;
+		private var gravity:b2Vec2 = new b2Vec2(0,9.8);
+		private var wall:b2PolygonShape= new b2PolygonShape();
+		private var wallDf:b2BodyDef = new b2BodyDef();
+		private var wallB:b2Body;
+		private var mouseJointDef:b2MouseJointDef = new b2MouseJointDef();
+		private var mouseJoint:b2MouseJoint;  
+		private var basic_x:Number = 200/30;
+		private var basic_y:Number = 100/30;
+		private var m_mouseJoint:b2MouseJoint; 
+		private var mouseXWorldPhys:Number;
+		private var mouseYWorldPhys:Number;
+		private var m_mouse_dowm:Boolean = false; 
+		
+		public function Ragdoll()
+		{
+			world = new b2World(gravity,true);
+			
+			//wall
+			
+			// Left
+			wallDf.position.Set( -95 / 30, stage.stageHeight / 30 /2.5);
+			wall.SetAsBox(100/30, stage.stageHeight/30);
+			wallB = world.CreateBody(wallDf);
+			wallB.CreateFixture2(wall);
+			// Right
+			wallDf.position.Set((stage.stageWidth + 95) / 30, stage.stageHeight / 30 / 2);
+			wallB = world.CreateBody(wallDf);
+			wallB.CreateFixture2(wall);
+			// Top
+			wallDf.position.Set(stage.stageHeight / 30 / 2, -95 / 30);
+			wall.SetAsBox(stage.stageWidth/30, 100/30);
+			wallB = world.CreateBody(wallDf);
+			wallB.CreateFixture2(wall);
+			// Bottom
+			wallDf.position.Set(stage.stageWidth / 30 / 2, (stage.stageHeight + 95) / 30);
+			wallB = world.CreateBody(wallDf);
+			wallB.CreateFixture2(wall);
+			
+			
+			//head
+			var head:b2Body = circle(1,0.4,0.3,basic_x,basic_y,15,0x00ffff);
+			
+			//body
+			var body1:b2Body = square(1,0,0,basic_x,basic_y+26/30,0.6,0.3,0x00ffff,true);
+			var body2:b2Body = square(1,0,0.2,basic_x,basic_y+40/30,0.6,0.3,0x00ffff,true);
+			var body3:b2Body = square(1,0,0.2,basic_x,basic_y+54/30,0.6,0.3,0x00ffff,true);
+			var body4:b2Body = square(1,0,0.2,basic_x,basic_y+68/30,0.6,0.3,0x00ffff,true);
+			
+			//arms
+			var arm1:b2Body = square(1,0.5,0.2,basic_x-25/30,basic_y+30/30,0.25,0.6,0x00ffff,true); //L U
+			var arm2:b2Body = square(1,0.5,0.2,basic_x-25/30,basic_y+60/30,0.25,0.6,0x00ffff,true);
+			var arm3:b2Body = square(1,0.5,0.2,basic_x+25/30,basic_y+30/30,0.25,0.6,0x00ffff,true); //R U
+			var arm4:b2Body = square(1,0.5,0.2,basic_x+25/30,basic_y+60/30,0.25,0.6,0x00ffff,true);
+			
+			//legs
+			var leg1:b2Body = square(1,0.5,0.2,basic_x-10/30,basic_y+88/30,0.3,0.5,0x00ffff,true); //L U
+			var leg2:b2Body = square(1,0.5,0.2,basic_x-10/30,basic_y+115/30,0.3,0.5,0x00ffff,true);
+			var leg3:b2Body = square(1,0.5,0.2,basic_x+10/30,basic_y+88/30,0.3,0.5,0x00ffff,true); //R U
+			var leg4:b2Body = square(1,0.5,0.2,basic_x+10/30,basic_y+115/30,0.3,0.5,0x00ffff,true);
+			
+			//joints
+			//head to body1
+			joint(head,body1,-40,40,basic_x,basic_y+15/30);
+			//body1 to body2
+			joint(body1,body2,-10,10,basic_x,basic_y+30/30);
+			//body2 to body3
+			joint(body2,body3,-10,10,basic_x,basic_y+45/30);
+			//body3 to body4 
+			joint(body3,body4,-10,10,basic_x,basic_y+60/30);
+			//body1 arm1
+			joint(body1,arm1,-85,160,basic_x-25/30,basic_y+20/30);
+			//arm1 arm2
+			joint(arm1,arm2,-130,10,basic_x-25/30,basic_y+40/30);
+			//body1 arm3
+			joint(arm3,body1,-160,185,basic_x+25/30,basic_y+20/30);
+			//arm3 arm4
+			joint(arm3,arm4,-10,130,basic_x+25/30,basic_y+40/30);
+			//body4 leg1
+			joint(body4,leg1,-25,40,basic_x-8/30,basic_y+72/30);
+			//leg1 leg2
+			joint(leg1,leg2,-25,60,basic_x-10/30,basic_y+100/30);
+			//body4 leg3
+			joint(body4,leg3,-45,25,basic_x+8/30,basic_y+72/30);
+			//leg3 leg4
+			joint(leg3,leg4,-75,25,basic_x+10/30,basic_y+100/30);
+			
+			for(var i:int = 0;i < 5; i++){
+				square(1,0.2,0.2,(Math.random()*(stage.stageWidth-10)+5)/30,(stage.stageHeight-2)/30,
+					Math.random()*50/30,Math.random()*50/30,0x00ffff,true);
+			}
+			
+			//mouse joint //いずれ消す
+			mouseJointDef.bodyA = world.GetGroundBody();
+			mouseJointDef.bodyB =head;
+			mouseJointDef.target = head.GetWorldCenter();
+			mouseJointDef.maxForce = 150;
+						
+			//event
+			stage.addEventListener(Event.ENTER_FRAME,onEnterFrame);
+			stage.addEventListener(MouseEvent.MOUSE_DOWN,mouseDown);
+			stage.addEventListener(MouseEvent.MOUSE_UP,mouseUp);
+			stage.addEventListener(MouseEvent.MOUSE_MOVE, mouseMove);
+			
+			//bebug
+			var debug:b2DebugDraw = new b2DebugDraw();
+			debug.SetSprite(this);
+			debug.SetDrawScale(30.0);
+			debug.SetFillAlpha(0.3);
+			debug.SetLineThickness(1.0);
+			debug.SetLineThickness(2);
+			debug.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+			world.SetDebugDraw(debug);
+			world.DrawDebugData();
+		}
+		
+		private function onEnterFrame(e:Event):void{
+			for(var body:b2Body = world.GetBodyList(); body != null; body = body.GetNext()){
+				if(body.GetUserData() != null && body.GetUserData() != undefined){
+					body.GetUserData().x = body.GetPosition().x*30;
+					body.GetUserData().y = body.GetPosition().y*30;
+					body.GetUserData().rotation = body.GetAngle()*180/Math.PI;  //箱の動きにsprite合わせて動かす
+				}
+			}
+			world.Step(1/60, 10 ,20);
+			world.ClearForces();
+			world.DrawDebugData();
+		}
+		
+		private function mouseDown(e:MouseEvent):void{
+			mouseJoint = b2MouseJoint(world.CreateJoint(mouseJointDef));
+		}
+		
+		private function mouseMove(e:MouseEvent):void{
+			if(mouseJoint != null){
+				mouseJoint.SetTarget(new b2Vec2(mouseX/30, mouseY/30));
+			}
+		}
+		
+		private function mouseUp(e:MouseEvent):void{
+			world.DestroyJoint(mouseJoint);
+			mouseJoint = null;
+		}
+		
+		private function circle(density:Number,friction:Number,restitution:Number,position_x:Number,position_y:Number,radian:Number,color:Number):b2Body{
+			var bodyDef:b2BodyDef = new b2BodyDef();
+			var fixtureDef:b2FixtureDef = new b2FixtureDef();
+			var circleDef:b2CircleShape = new b2CircleShape();
+			fixtureDef.density = density; //密度
+			fixtureDef.friction = friction; // 摩擦
+			fixtureDef.restitution = restitution; //反発係数
+			fixtureDef.shape = circleDef;
+			circleDef.SetRadius(radian/30);
+			bodyDef.type = b2Body.b2_dynamicBody;  //動的
+			bodyDef.position.Set(position_x,position_y); 
+			var body:b2Body;		
+			body = world.CreateBody(bodyDef);
+			body.CreateFixture(fixtureDef);
+			return body;	
+		}
+		
+		private function square(density:Number,friction:Number,restitution:Number,position_x:Number,position_y:Number,width:Number,height:Number,color:Number,dynamic:Boolean):b2Body{
+			var bodyDef:b2BodyDef = new b2BodyDef();
+			var fixtureDef:b2FixtureDef = new b2FixtureDef();
+			var boxShape:b2PolygonShape = new b2PolygonShape();
+			
+			fixtureDef.density = density; //密度
+			fixtureDef.friction = friction; // 摩擦
+			fixtureDef.restitution = restitution; //反発係数
+			bodyDef.position.Set(position_x, position_y);
+			boxShape.SetAsBox(width,height);
+			fixtureDef.shape = boxShape;
+			if(dynamic) bodyDef.type = b2Body.b2_dynamicBody; //動的
+			var body:b2Body = world.CreateBody(bodyDef);
+			body.CreateFixture(fixtureDef);
+			return body;	
+		}
+		
+		private function joint(from:b2Body,to:b2Body,lowerRange:Number,upperRange:Number,vecX:Number,vecY:Number):void{
+			var jointDef:b2RevoluteJointDef = new b2RevoluteJointDef();
+			//			jointDef.motorSpeed = 0.2;
+			//			jointDef.maxMotorTorque = 0;
+			//			jointDef.enableMotor = false;
+			jointDef.collideConnected = false;
+			jointDef.enableLimit = true;
+			jointDef.lowerAngle = lowerRange/(180/Math.PI);
+			jointDef.upperAngle = upperRange/(180/Math.PI);
+			jointDef.Initialize(from,to,new b2Vec2(vecX,vecY));
+			world.CreateJoint(jointDef);
+			//			var frontJoint:b2RevoluteJoint = b2RevoluteJoint(world.CreateJoint(jointDef));
+		}
+	}
+}
+
