@@ -214,7 +214,6 @@ package
 			jointDef.upperAngle = upperRange/(180/Math.PI);
 			jointDef.Initialize(from,to,new b2Vec2(vecX,vecY));
 			world.CreateJoint(jointDef);
-			//			var frontJoint:b2RevoluteJoint = b2RevoluteJoint(world.CreateJoint(jointDef));
 		}
 	}
 }
